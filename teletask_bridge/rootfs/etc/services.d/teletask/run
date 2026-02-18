@@ -4,6 +4,13 @@ set -euo pipefail
 
 bashio::log.info "Starting Teletask Bridge..."
 
-# If your app expects a config file in /app/config.json, ensure it's present or mount it via options.
-# Start the bridge in the foreground so s6 can supervise it:
-exec python3 /app/main.py
+CONFIG_PATH="$(bashio::config 'config_path')"
+
+if ! bashio::fs.file_exists "$CONFIG_PATH"; then
+    bashio::log.fatal "Config file not found at: $CONFIG_PATH"
+    exit 1
+fi
+
+bashio::log.info "Using configuration: $CONFIG_PATH"
+
+exec python3 /app/main.py "$CONFIG_PATH"
