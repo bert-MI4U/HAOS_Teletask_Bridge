@@ -16,8 +16,6 @@ RUN if [ -f /app/requirements.txt ]; then \
       python3 -m pip install --no-cache-dir -r /app/requirements.txt; \
     fi
 
-
-
 # s6 services and any other rootfs files
 COPY rootfs/ /
 # Do NOT set CMD here; the base image's default CMD ["/init"] must remain
