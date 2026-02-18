@@ -13,4 +13,5 @@ fi
 
 bashio::log.info "Using configuration: $CONFIG_PATH"
 
-exec python3 /app/main.py "$CONFIG_PATH"
+# Use the venv Python we created at build time
+exec /opt/venv/bin/python /app/main.py "$CONFIG_PATH"
