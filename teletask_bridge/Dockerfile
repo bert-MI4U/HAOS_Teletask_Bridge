@@ -1,8 +1,8 @@
 ARG BUILD_FROM=hassioaddons/base-python:latest
 FROM $BUILD_FROM
 
-# (Optional) You typically do NOT need this on the *_base-python3 images:
-# RUN apk add --no-cache python3 py3-pip
+# Install Python + pip (Alpine)
+RUN apk add --no-cache python3 py3-pip
 
 # App files
 WORKDIR /app
