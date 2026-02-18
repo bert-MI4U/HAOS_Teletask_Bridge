@@ -1,15 +1,18 @@
-ARG BUILD_FROM=ghcr.io/home-assistant/{arch}-addon-base-python3:latest
+ARG BUILD_FROM=hassioaddons/base-python:latest
 FROM $BUILD_FROM
 
-# Copy application
+# (Optional) You typically do NOT need this on the *_base-python3 images:
+# RUN apk add --no-cache python3 py3-pip
+
+# App files
 WORKDIR /app
 COPY app/ /app/
 
-# Install dependencies
-RUN pip3 install --no-cache-dir -r /app/requirements.txt
+# Python dependencies (if your app has requirements.txt)
+RUN if [ -f /app/requirements.txt ]; then \
+      pip3 install --no-cache-dir -r /app/requirements.txt; \
+    fi
 
-# Copy and allow run
-COPY run.sh /run.sh
-RUN chmod a+x /run.sh
-
-CMD [ "/run.sh" ]
+# s6 services and any other rootfs files
+COPY rootfs/ /
+# Do NOT set CMD here; the base image's default CMD ["/init"] must remain
