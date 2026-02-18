@@ -29,6 +29,6 @@
         
         {"name": "Regen", "component": "switch", "teletask_type": "cond", "central_unit": 1, "teletask_id": 2},
 
-        {"name": "Living", "component": "sensor", "device_class": "temperature", "unit_of_measurement": "°C", "teletask_type": "sensor", "central_unit": 1, "teletask_id": 90},
+        {"name": "Living", "component": "sensor", "device_class": "temperature", "unit_of_measurement": "°C", "teletask_type": "sensor", "central_unit": 1, "teletask_id": 90}
     ]
 }
