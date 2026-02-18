@@ -10,9 +10,9 @@ COPY app/ /app/
 
 # Install Python deps (if present). Prefer to list all deps in requirements.txt (incl. gmqtt)
 RUN if [ -f /app/requirements.txt ]; then \
-      python3 -m pip install --no-cache-dir -r /app/requirements.txt; \
+      python3 -m pip install --no-cache-dir --break-system-packages -r /app/requirements.txt; \
     else \
-      python3 -m pip install --no-cache-dir gmqtt; \
+      python3 -m pip install --no-cache-dir --break-system-packages gmqtt; \
     fi
 
 # s6 services and any other rootfs files
