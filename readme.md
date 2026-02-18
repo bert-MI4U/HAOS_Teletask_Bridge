@@ -16,7 +16,7 @@ select the Teletask Bridge from the App Store and install
 
 configure the config.json file (see [below](#configuration))  
 use Studio Code Server (or other)    
-create a Teletask folder in the /config folder
+create a teletask folder in the /config folder
 create a config.json file
 copy the config.json contents below to this file.
 
