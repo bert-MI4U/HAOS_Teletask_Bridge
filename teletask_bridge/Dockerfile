@@ -12,6 +12,8 @@ COPY app/ /app/
 COPY rootfs/ /
 # Do NOT set CMD here; the base image's default CMD ["/init"] must remain
 
-# Make s6 service scripts executable
-RUN chmod +x /etc/services.d/teletask/run \
-    && chmod +x /etc/services.d/teletask/finish
+# Ensure scripts are executable and fix Windows line endings if needed
+RUN chmod +x /etc/cont-init.d/* || true \
+    && chmod +x /etc/services.d/teletask/run \
+    && chmod +x /etc/services.d/teletask/finish \
+    && sed -i 's/\r$//' /etc/cont-init.d/* /etc/services.d/teletask/run /etc/services.d/teletask/finish || true
