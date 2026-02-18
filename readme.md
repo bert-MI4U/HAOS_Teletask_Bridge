@@ -8,7 +8,9 @@ This application allows you to take full control of your teletask setup through 
 goto settings/apps  
 click on install app  
 click on tree dots at the top and select repositories  
-paste the URL "https://github.com/bert-MI4U/teletask_bridge_HAaddon" and press add.  
+paste the URL "https://github.com/bert-MI4U/teletask_bridge_HAaddon" and press add.
+
+select the Teletask Bridge from the App Store and install
 
  
 - download the app to your system:
