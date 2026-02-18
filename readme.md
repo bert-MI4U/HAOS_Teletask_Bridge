@@ -5,6 +5,8 @@ This application allows you to take full control of your teletask setup through 
 
 ## installation as HAOS add-on
 
+![Supports aarch64 Architecture][aarch64-shield] ![Supports amd64 Architecture][amd64-shield] ![Supports armhf Architecture][armhf-shield] ![Supports armv7 Architecture][armv7-shield] ![Supports i386 Architecture][i386-shield]
+
 goto settings/apps  
 click on install app  
 click on tree dots at the top and select repositories  
@@ -12,14 +14,8 @@ paste the URL "https://github.com/bert-MI4U/teletask_bridge_HAaddon" and press a
 
 select the Teletask Bridge from the App Store and install
 
- 
-- download the app to your system:
 
-```
-mkdir telehob
-cd telehob
-git clone xxxx
-```
+
 - configure your system (see [below](#configuration))
 - run the app: `python main.py`
 - set up the application to auto start:
@@ -57,3 +53,11 @@ All config data is stored in the file `config.json`, located in the application 
     - service
     - cond
   - teletask_id: the id number to identify the item in teletask. This can be found with the prosoft application of teletask.
+ 
+
+[aarch64-shield]: https://img.shields.io/badge/aarch64-yes-green.svg
+[amd64-shield]: https://img.shields.io/badge/amd64-yes-green.svg
+[armhf-shield]: https://img.shields.io/badge/armhf-yes-green.svg
+[armv7-shield]: https://img.shields.io/badge/armv7-yes-green.svg
+[i386-shield]: https://img.shields.io/badge/i386-yes-green.svg
+
