@@ -1,4 +1,4 @@
-ARG BUILD_FROM=ghcr.io/home-assistant/{arch}-addon-base-python3:latest
+ARG BUILD_FROM
 FROM $BUILD_FROM
 
 WORKDIR /app
