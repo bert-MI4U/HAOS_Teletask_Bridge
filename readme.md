@@ -14,11 +14,12 @@ paste the URL "https://github.com/bert-MI4U/teletask_bridge_HAaddon" and press a
 
 select the Teletask Bridge from the App Store and install
 
-use Studio Code Server (or other) to add a the config.json file to  
+configure the config.json file (see [below](#configuration))  
+use Studio Code Server (or other)    
 create a Teletask folder in the /config folder
-copy the config.json file to this folder.
+create a config.json file
+copy the config.json contents below to this file.
 
-configure the config.json file (see [below](#configuration))
 
 ## configuration
 Auto discovery is used on the home-automation side to load all the assets. Teletask however doesn't support auto-discovery, so you will have to define the list yourself.
@@ -53,7 +54,7 @@ All config data is stored in the file `config.json`, located in the application 
 
  Sample config.json file
 
- {
+``` {
     "home_assistant": {
         "discovery_prefix": "homeassistant",
         "client_id": "teletask_bridge",
@@ -87,6 +88,7 @@ All config data is stored in the file `config.json`, located in the application 
         {"name": "Living", "component": "sensor", "device_class": "temperature", "unit_of_measurement": "°C", "teletask_type": "sensor", "central_unit": 1, "teletask_id": 90},
     ]
 }
+```
 
 [aarch64-shield]: https://img.shields.io/badge/aarch64-yes-green.svg
 [amd64-shield]: https://img.shields.io/badge/amd64-yes-green.svg
