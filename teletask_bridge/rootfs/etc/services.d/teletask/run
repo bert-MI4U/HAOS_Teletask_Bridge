@@ -2,9 +2,6 @@
 # Fail fast
 set -euo pipefail
 
-# Install dependencies (only first run; safe to re-run)
-pip3 install --no-cache-dir gmqtt || true
-
 bashio::log.info "Starting Teletask Bridge..."
 
 CONFIG_PATH="$(bashio::config 'config_path')"
