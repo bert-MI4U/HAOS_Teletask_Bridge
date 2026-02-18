@@ -1,6 +1,6 @@
 {
   "name": "Teletask Bridge",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "slug": "teletask_bridge",
   "description": "Bridge for Teletask home automation, packaged as a Home Assistant add-on.",
   "startup": "services",
