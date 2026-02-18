@@ -14,6 +14,15 @@ ENV PATH="/opt/venv/bin:${PATH}"
 WORKDIR /app
 COPY app/ /app/
 
+# Install your requirements into the venv (build-time, no PEP668 issues)
+# If you don't have requirements.txt, this will just skip the step.
+RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    if [ -f /app/requirements.txt ]; then \
+        pip install --no-cache-dir -r /app/requirements.txt; \
+    else \
+        pip install --no-cache-dir gmqtt; \
+    fi
+
 # s6 services and any other rootfs files
 COPY rootfs/ /
 
