@@ -6,5 +6,6 @@
   "startup": "services",
   "boot": "auto",
   "host_network": true,
+  "arch": ["amd64", "aarch64", "armv7", "armhf", "i386"],
   "image": "local/teletask_bridge"
 }
