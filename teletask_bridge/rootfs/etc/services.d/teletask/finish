@@ -1,4 +1,2 @@
-#!/usr/bin/execlineb -S0
-# Called when 'run' exits; make the add-on stop instead of auto-restarting forever (optional)
-s6-svscanctl -t /var/run/s6/services
+#!/usr/bin/with-contenv bash
 exit 0
