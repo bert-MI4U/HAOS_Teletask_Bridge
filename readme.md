@@ -3,8 +3,14 @@ A teletask to home-assistant bridge
 
 This application allows you to take full control of your teletask setup through the home-assistant gateway. It registers your teletask unit as an mqtt device and adds all the sensors/actuators that you have defined in the config.
 
-## installation
+## installation as HAOS add-on
 
+goto settings/apps  
+click on install app  
+click on tree dots at the top and select repositories  
+paste the URL "https://github.com/bert-MI4U/teletask_bridge_HAaddon" and press add.  
+
+ 
 - download the app to your system:
 
 ```
