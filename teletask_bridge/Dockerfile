@@ -1,11 +1,15 @@
-ARG BUILD_FROM
+ARG BUILD_FROM=ghcr.io/home-assistant/{arch}-addon-base-python3:latest
 FROM $BUILD_FROM
 
+# Copy application
 WORKDIR /app
 COPY app/ /app/
 
-RUN if [ -f /app/requirements.txt ]; then \
-      pip3 install --no-cache-dir -r /app/requirements.txt; \
-    fi
+# Install dependencies
+RUN pip3 install --no-cache-dir -r /app/requirements.txt
 
-COPY rootfs/ /
+# Copy and allow run
+COPY run.sh /run.sh
+RUN chmod a+x /run.sh
+
+CMD [ "/run.sh" ]
