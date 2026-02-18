@@ -14,15 +14,11 @@ paste the URL "https://github.com/bert-MI4U/teletask_bridge_HAaddon" and press a
 
 select the Teletask Bridge from the App Store and install
 
+use Studio Code Server (or other) to add a the config.json file to  
+create a Teletask folder in the /config folder
+copy the config.json file to this folder.
 
-
-- configure your system (see [below](#configuration))
-- run the app: `python main.py`
-- set up the application to auto start:
-  - you can use launcher.sh: adjust the paths used in the file according to your own setup.
-  - the 30 sec delay in the script allows for home-assistant to start up first, otherwise the script will run too soon and the devices won't be registered.
-  - make the script executable `chmod 755 launcher.sh`
-  - add to crontab: `sudo crontab -e`
+configure the config.json file (see [below](#configuration))
 
 ## configuration
 Auto discovery is used on the home-automation side to load all the assets. Teletask however doesn't support auto-discovery, so you will have to define the list yourself.
@@ -53,7 +49,44 @@ All config data is stored in the file `config.json`, located in the application 
     - service
     - cond
   - teletask_id: the id number to identify the item in teletask. This can be found with the prosoft application of teletask.
+
+
+ Sample config.json file
+
+ {
+    "home_assistant": {
+        "discovery_prefix": "homeassistant",
+        "client_id": "teletask_bridge",
+        "broker_host": "192.168.1.200",
+        "device_id": "teletask_1"
+    },
+    "teletask": {
+        "ip": "192.168.1.1",
+        "port": 55957
+    },
+    "assets": [
+        {"name": "Garage", "component": "light", "teletask_type": "relay", "central_unit": 1, "teletask_id": 1},
  
+        {"name": "Oprit", "component": "light", "teletask_type": "locmood", "central_unit": 1, "teletask_id": 5},
+
+        {"name": "Sauna R", "component": "light", "teletask_type": "dimmer", "central_unit": 1, "teletask_id": 1},
+        {"name": "Sauna G", "component": "light", "teletask_type": "dimmer", "central_unit": 1, "teletask_id": 2},
+        {"name": "Sauna B", "component": "light", "teletask_type": "dimmer", "central_unit": 1, "teletask_id": 3},
+        {"name": "Sauna W", "component": "light", "teletask_type": "dimmer", "central_unit": 1, "teletask_id": 4},
+
+        {"name": "Werkbank 1", "component": "switch", "teletask_type": "relay", "central_unit": 1, "teletask_id": 7},
+        
+        {"name": "TV-kijken", "component": "switch", "teletask_type": "genmood", "central_unit": 1, "teletask_id": 6},
+
+        {"name": "Zomer", "component": "switch", "teletask_type": "flag", "central_unit": 1, "teletask_id": 5},
+
+        {"name": "Screens Weather", "component": "switch", "teletask_type": "process", "central_unit": 1, "teletask_id": 26},
+        
+        {"name": "Regen", "component": "switch", "teletask_type": "cond", "central_unit": 1, "teletask_id": 2},
+
+        {"name": "Living", "component": "sensor", "device_class": "temperature", "unit_of_measurement": "°C", "teletask_type": "sensor", "central_unit": 1, "teletask_id": 90},
+    ]
+}
 
 [aarch64-shield]: https://img.shields.io/badge/aarch64-yes-green.svg
 [amd64-shield]: https://img.shields.io/badge/amd64-yes-green.svg
