@@ -15,10 +15,11 @@ paste the URL "https://github.com/bert-MI4U/teletask_bridge_HAaddon" and press a
 select the Teletask Bridge from the App Store and install
 
 configure the config.json file (see [below](#configuration))  
-use Studio Code Server (or other)    
-create a teletask folder in the /config folder
-create a config.json file
-copy the config.json contents below to this file.
+use Studio Code Server (or other)   
+Add the addon_configs folder.
+Run the app once, to create the slug subfolder
+create a config.json file in a teletask subfolder in this slug subfolder
+copy the config.json contents below to this file (as example).
 
 
 ## configuration
