@@ -91,13 +91,13 @@ async def main(loop):
     main loop
     """
     config_path = sys.argv[1] if len(sys.argv) > 1 else None
-        cfg = load(config_path)
-        if cfg is None:
-            print("failed to load configuration; exiting")
-            return
+    cfg = load(config_path)
+    if cfg is None:
+        print("failed to load configuration; exiting")
+        return
     # ... continue startup ...
 
-config = Config.load(cfg)
+    config = Config.load(cfg)
     if not config:                                          # something went wrong loading the config, don't continue, exit the app
         return
     RS.load_config(config_path)
