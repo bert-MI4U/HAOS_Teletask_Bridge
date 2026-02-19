@@ -14,5 +14,6 @@
   "schema": {
     "config_path": "str"
   },
-  "map":["addon_config:rw"]
+  "map":["addon_config:rw"],
+  "services":["mqtt:need"]
 }
