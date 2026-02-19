@@ -95,11 +95,11 @@ def validate_config(config):
     return is_ok
 
 
-def load(config_path: Optional[str]=None):
+def load(config_file[str]=None):
     """loads the config
     """
     # Default to local file if no path provided
-    effective_path = Path(config_path) if config_path else Path("config.json")
+    effective_path = Path(config_file) if config_path else Path("config.json")
     
     print("loading config")
     if not os.path.exists(effective_path):
