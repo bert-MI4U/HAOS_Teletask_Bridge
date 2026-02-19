@@ -95,7 +95,7 @@ def validate_config(config):
     return is_ok
 
 
-def load(config_path: Optional[str]):
+def load(config_path: Optional[str]=None):
     """loads the config
     """
     # Default to local file if no path provided
