@@ -3,25 +3,23 @@
 set -euo pipefail
 
 bashio::log.info "Waiting for MQTT to be ready..."
-
 MQTT_HOST=$(bashio::services "mqtt" "host")
 MQTT_PORT=$(bashio::services "mqtt" "port")
-
 while ! nc -z "$MQTT_HOST" "$MQTT_PORT"; do
     bashio::log.info "MQTT not ready at $MQTT_HOST:$MQTT_PORT, retrying..."
     sleep 2
 done
 
-bashio::log.info "MQTT broker is up, starting Teletask Bridge..."
+bashio::log.info "MQTT broker is up, waiting another 20 seconds..."
+sleep 20
 
+bashio::log.info "starting Teletask Bridge..."
 CONFIG_PATH="$(bashio::config 'config_path')"
-
 if ! bashio::fs.file_exists "$CONFIG_PATH"; then
     bashio::log.fatal "Config file not found at: $CONFIG_PATH"
     exit 1
 fi
-
 bashio::log.info "Using configuration: $CONFIG_PATH"
 
-# Use the venv Python we created at build time
+# Start the app
 exec python /app/main.py "$CONFIG_PATH"
