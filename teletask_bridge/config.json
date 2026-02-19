@@ -14,5 +14,5 @@
   "schema": {
     "config_path": "str"
   },
-  "map":["config:rw"]
+  "map":["addon_config:rw"]
 }
