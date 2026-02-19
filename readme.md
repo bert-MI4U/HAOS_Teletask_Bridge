@@ -16,9 +16,9 @@ select the Teletask Bridge from the App Store and install
 
 configure the config.json file (see [below](#configuration))  
 use Studio Code Server (or other)   
-Add the addon_configs folder.
+Add the addon_configs folder to your workspace
 Run the app once, to create the slug subfolder
-create a config.json file in a teletask subfolder in this slug subfolder
+Create a config.json file in a teletask subfolder in this slug subfolder
 copy the config.json contents below to this file (as example).
 
 
