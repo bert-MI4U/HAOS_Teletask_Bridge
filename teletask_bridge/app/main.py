@@ -94,7 +94,7 @@ async def main(loop):
     config = Config.load(config_path)
     if not config:                                          # something went wrong loading the config, don't continue, exit the app
         return
-    RS.load_config(config_path)
+    RS.load_config()
     started = await HA.start(config['home_assistant'], handle_actuator, loop)
     if not started:
         print('HA not started, stopping')
