@@ -2,7 +2,17 @@
 # Fail fast
 set -euo pipefail
 
-bashio::log.info "Starting Teletask Bridge..."
+bashio::log.info "Waiting for MQTT to be ready..."
+
+MQTT_HOST=$(bashio::services "mqtt" "host")
+MQTT_PORT=$(bashio::services "mqtt" "port")
+
+while ! nc -z "$MQTT_HOST" "$MQTT_PORT"; do
+    bashio::log.info "MQTT not ready at $MQTT_HOST:$MQTT_PORT, retrying..."
+    sleep 2
+done
+
+bashio::log.info "MQTT broker is up, starting Teletask Bridge..."
 
 CONFIG_PATH="$(bashio::config 'config_path')"
 
