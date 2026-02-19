@@ -98,14 +98,12 @@ def validate_config(config):
 def load(config_file):
     """loads the config
     """
-    # Default to local file if no path provided
-    effective_path = Path(config_file) if config_file else Path("config.json")
     
     print("loading config")
-    if not os.path.exists(effective_path):
+    if not os.path.exists(config_file):
         print("no config found")
         return None
-    with open(effective_path, encoding='utf-8') as file:
+    with open(config_file, encoding='utf-8') as file:
         data = json.load(file)
         print("found config {}".format(json.dumps(data)))
         if not validate_config(data):
