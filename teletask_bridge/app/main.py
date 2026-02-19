@@ -89,7 +89,7 @@ async def main(loop):
     """
     main loop
     """
-    config = Config.load()
+    config = Config.load(config_path)
     if not config:                                          # something went wrong loading the config, don't continue, exit the app
         return
     RS.load_config(config_path)
