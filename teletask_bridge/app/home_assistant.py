@@ -162,7 +162,7 @@ def get_value(asset, value, as_dimmer=False):
     """
     component = asset['component']
     result = None
-    if component == 'light':
+    if component in ['light', 'switch']:
         if not as_dimmer:                               # when as dimmer, always use the actual value
             if value[0] == 0:                           # need to compare the value, not the array
                 result = 'OFF'
