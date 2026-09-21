@@ -6,7 +6,7 @@
   "startup": "services",
   "boot": "auto",
   "host_network": true,
-  "arch": ["amd64", "aarch64", "armv7", "armhf", "i386"],
+  "arch": ["amd64", "aarch64"],
   "init": false,
   "options": {
     "config_path": "/config/teletask/config.json"
