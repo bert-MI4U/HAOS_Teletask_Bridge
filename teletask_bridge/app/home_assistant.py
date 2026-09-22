@@ -163,12 +163,22 @@ def get_value(asset, value, as_dimmer=False):
     """
     component = asset['component']
     result = None
-    if component in ['light', 'switch']:
-        if not as_dimmer:                               # when as dimmer, always use the actual value
-            if value[0] == 0:                           # need to compare the value, not the array
+    
+    if component == 'light':
+        if as_dimmer:
+            result = '{}'.format(value[0])        # when as dimmer, always use the actual value
+        else:
+            if value[0] == 0:                    # need to compare the value, not the array
                 result = 'OFF'
             else:
                 result = 'ON'
+
+    elif component == 'switch' and asset['teletask_type'] == 'relay':
+        if value[0] == 0:
+            result = 'OFF'
+        else:
+            result = 'ON'
+ 
     elif component == 'cover':
         # print("values: {}".format(value))
         if value[1] == 0:
@@ -177,10 +187,13 @@ def get_value(asset, value, as_dimmer=False):
             result = 'closing'
         else:
             result = 'opening'
+            
     elif component == 'sensor':                     # a single numeric value (temperature), convert it to a string for easy sending?
         result = '{}'.format(value)
+        
     if result == None:
         result = value                              # return the full array cause mqtt publish wants a byte array
+    
     else:
         result = bytearray(result, 'utf-8')
     return result
