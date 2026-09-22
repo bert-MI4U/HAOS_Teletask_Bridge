@@ -8,7 +8,7 @@ from gmqtt import constants as MQTTConst
 
 client = None
 discovery_prefix = 'homeassistant'
-node_id = "teletask_1"                                # the id of the teletask device for mqtt topics
+node_id = "teletask_1"                                  # the id of the teletask device for mqtt topics
 on_actuator = None                                      # callback that handles actuator messages for teletask
 main_loop = None                                        # async loop
 is_connected = False
@@ -99,12 +99,14 @@ def build_asset_def(base_topic, asset, key, is_first):
     if asset['component'] == 'button':
         payload['command_topic'] = "~/exec"
     else:
-        if asset['teletask_type'] not in ['flag', 'sensor']:
+        if asset['component'] not in ['sensor', 'binary_sensor']:
             payload['cmd_t'] = "~/set"
         if 'device_class' in asset:
             payload['device_class'] = asset['device_class']
         if 'unit_of_measurement' in asset:
             payload['unit_of_measurement'] = asset['unit_of_measurement']
+        if 'state_class' in asset:
+            payload['state_class'] = asset['state_class']
         if asset['teletask_type'] == 'dimmer':
             payload['bri_cmd_t'] = '~/setbri'
             payload['bri_stat_t'] = '~/statebri'
@@ -168,7 +170,7 @@ def get_value(asset, value, as_dimmer=False):
         if as_dimmer:
             result = '{}'.format(value[0])        # when as dimmer, always use the actual value
         else:
-            if value[0] == 0:                    # need to compare the value, not the array
+            if value[0] == 0:                     # need to compare the value, not the array
                 result = 'OFF'
             else:
                 result = 'ON'
@@ -179,6 +181,12 @@ def get_value(asset, value, as_dimmer=False):
         else:
             result = 'ON'
  
+    elif component == 'binary_sensor'
+        if value[0] == 0:
+            result = 'OFF'
+        else:
+            result = 'ON'
+            
     elif component == 'cover':
         # print("values: {}".format(value))
         if value[1] == 0:
