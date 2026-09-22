@@ -144,13 +144,10 @@ def verify_checksum(msg):
 
 
 def convert_sensor(msg):
-    value = round(int.from_bytes(msg[6:8], "big") / 10 - 273, 2)
-    # target = int.from_bytes(msg[8:10], "big")
-    # day = int.from_bytes(msg[10:12], "big")
-    # night = int.from_bytes(msg[12:14], "big")
-    # result = [value, target, day, night]
-    return value
-
+    """Extract the raw Teletask sensor value.
+    Interpretation of the value (temperature, power, etc.) is done in home_assistant.py based on the configured device_class.
+    """
+    return int.from_bytes(msg[6:8], "big")
 
 async def process_message(msg):
     """checks the incomming message and dispatches it as needed
