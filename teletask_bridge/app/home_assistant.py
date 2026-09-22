@@ -108,6 +108,7 @@ def build_asset_def(base_topic, asset, key, is_first):
         if asset['teletask_type'] == 'dimmer':
             payload['bri_cmd_t'] = '~/setbri'
             payload['bri_stat_t'] = '~/statebri'
+            payload['bri_scl']=100
             payload['on_command_type'] = 'brightness' # only send brigthness instruction don't include on/off
         if asset['component'] == 'cover':
             payload['position_topic'] = '~/pos'
