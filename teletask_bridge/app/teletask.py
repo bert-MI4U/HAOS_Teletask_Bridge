@@ -162,7 +162,7 @@ async def process_message(msg):
         type = function_to_teletask_type(msg[2])
         nr = int.from_bytes(msg[3:5], "big")
         # Teletask reports Local Mood events with unit 0, while Local Moods are configured against central unit 1.
-        if type == 'locmood' and unit == 0:
+        if type in ['locmood', 'flag', 'cond'] and unit == 0:
             unit = 1
         values = None
         if msg[2] == const.FNC_MOTORFNC:
