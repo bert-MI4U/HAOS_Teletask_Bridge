@@ -9,7 +9,7 @@ keep_alive_task = None          # task that runs making certain that the connect
 
 is_stopped = False              # flag gets set when we need to go out of the reader loop
 
-stop_signal = None                     # signal that helps us stop the reader loop
+stop_signal = None              # signal that helps us stop the reader loop
 on_event = None                 # callback for main, when we receive a message from teletaslk and it needs to be dispatched
 
 
@@ -161,6 +161,9 @@ async def process_message(msg):
         unit = msg[1]
         type = function_to_teletask_type(msg[2])
         nr = int.from_bytes(msg[3:5], "big")
+        # Teletask reports Local Mood events with unit 0, while Local Moods are configured against central unit 1.
+        if type == 'locmood' and unit == 0:
+            unit = 1
         values = None
         if msg[2] == const.FNC_MOTORFNC:
             values = [msg[6], msg[7]]
