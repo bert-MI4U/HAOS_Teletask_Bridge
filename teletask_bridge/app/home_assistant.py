@@ -199,8 +199,20 @@ def get_value(asset, value, as_dimmer=False):
         else:
             result = 'opening'
             
-    elif component == 'sensor':                     # a single numeric value (temperature), convert it to a string for easy sending?
-        result = '{}'.format(value)
+    elif component == 'sensor':
+        device_class = asset.get('device_class')
+    
+        if device_class == 'temperature':
+            # Teletask temperature: Kelvin x 10
+            result = '{}'.format(round(value / 10 - 273, 2))
+    
+        elif device_class == 'power':
+            # Teletask power sensor: raw value x 10 = Watts
+            result = '{}'.format(value * 10)
+    
+        else:
+            # Unknown sensor type: publish raw Teletask value
+            result = '{}'.format(value)
         
     if result == None:
         result = value                              # return the full array cause mqtt publish wants a byte array
