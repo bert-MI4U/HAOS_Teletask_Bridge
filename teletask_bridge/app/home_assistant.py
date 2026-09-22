@@ -219,6 +219,10 @@ def get_value(asset, value, as_dimmer=False):
             # Verify scaling during actual rainfall
             result = '{}'.format(round(value / 100, 2)) 
             
+        elif device_class == 'illuminance':
+            # Teletask illuminance: lux x 10
+            result = '{}'.format(round(value / 10, 1))
+        
         else:
             # Unknown sensor type: publish raw Teletask value
             result = '{}'.format(value)
