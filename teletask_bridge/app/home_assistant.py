@@ -209,7 +209,16 @@ def get_value(asset, value, as_dimmer=False):
         elif device_class == 'power':
             # Teletask power sensor: raw value x 10 = Watts
             result = '{}'.format(value * 10)
-    
+
+        elif device_class == 'wind_speed':
+            # Teletask wind speed is transmitted as knots x 10
+            result = '{}'.format(round(value / 10, 1))
+            
+        elif device_class == 'precipitation':
+            # Teletask precipitation: assumed raw value x 100
+            # Verify scaling during actual rainfall
+            result = '{}'.format(round(value / 100, 2)) 
+            
         else:
             # Unknown sensor type: publish raw Teletask value
             result = '{}'.format(value)
