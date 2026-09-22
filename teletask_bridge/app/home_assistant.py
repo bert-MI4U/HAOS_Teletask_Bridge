@@ -115,6 +115,9 @@ def build_asset_def(base_topic, asset, key, is_first):
         if asset['component'] == 'cover':
             payload['position_topic'] = '~/pos'
             payload['set_position_topic'] = '~/setpos'
+        if asset['component'] == 'binary_sensor':
+            payload['pl_on'] = 'ON'
+            payload['pl_off'] = 'OFF'
     return payload
 
 def load_asset(asset, is_first):
