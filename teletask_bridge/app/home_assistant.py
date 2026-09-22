@@ -184,7 +184,7 @@ def get_value(asset, value, as_dimmer=False):
         else:
             result = 'ON'
  
-    elif component == 'binary_sensor'
+    elif component == 'binary_sensor':
         if value[0] == 0:
             result = 'OFF'
         else:
