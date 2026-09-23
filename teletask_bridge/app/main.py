@@ -39,28 +39,38 @@ async def handle_teletask_event(unit, type, nr, values):
         values (array) the values that were reported 
     """
     key = teletask.build_key(unit, type, nr)
+
+    # Handle the normal physical Teletask asset.
     if key in assets_dict:
         asset = assets_dict[key]
         cover_value = None
+
         HA.send(asset, values)
+
         if asset['component'] == 'cover':
-            cover_value = await RS.handle_cover_event(key, asset, values)
+            cover_value = await RS.handle_cover_event(
+                key,
+                asset,
+                values
+            )
+
         if cover_value:
             HA.send_cover_pos(asset, cover_value)
+
     # Also update virtual RGBW lights that use this dimmer.
     if key in rgbw_channels:
         for rgbw_key, channel in rgbw_channelsgroup = rgbw_groups[rgbw_key]
-     
+
             group[channel] = values[0]
-             
+
             HA.send_rgbw_state(
                 group['asset'],
                 group['red'],
                 group['green'],
                 group['blue'],
                 group['white']
-            )
-    
+            ) 
+
 def load_rgbw_groups(items):
     global rgbw_groups, rgbw_channels
 
