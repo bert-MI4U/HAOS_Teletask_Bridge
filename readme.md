@@ -1,6 +1,8 @@
 # teletask_bridge
 A teletask to home-assistant bridge
 
+Copied from Jan Bogaerts https://github.com/jan-bogaerts/teletask_bridge, wrapped in a HAOS application so it can be installed and updated with the help from copilot to accommodate RGBW led strips with 4 dimmers, feedback for switches and the use of additional sensors. 
+
 This application allows you to take full control of your teletask setup through the home-assistant gateway. It registers your teletask unit as an mqtt device and adds all the sensors/actuators that you have defined in the config.
 
 ## installation as HAOS add-on
