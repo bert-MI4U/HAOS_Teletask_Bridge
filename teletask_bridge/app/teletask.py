@@ -310,8 +310,11 @@ async def load_assets(items):
     print("request teletask states")
     covers = []
     for asset in items:
+        # RGBW is a virtual Home Assistant asset, Its four underlying dimmers are queried independently.
+        if asset['teletask_type'] == 'rgbw':
+            continue
         if asset['component'] == 'cover':
-            covers.append(asset)
+                covers.append(asset)
         fnc = teletask_type_to_function(asset['teletask_type'])
         teletask_id_low, teletask_id_high = split_2_bytes(asset['teletask_id'])
         msg = [const.COMMAND_GET, asset['central_unit'], fnc, teletask_id_high, teletask_id_low]
