@@ -1,6 +1,6 @@
 {
   "name": "Teletask Bridge",
-  "version": "1.4.7",
+  "version": "1.4.8",
   "slug": "teletask_bridge",
   "description": "Bridge for Teletask home automation, packaged as a Home Assistant add-on.",
   "startup": "services",
@@ -8,6 +8,8 @@
   "host_network": true,
   "arch": ["amd64", "aarch64"],
   "init": false,
+  "hassio_api": true,
+  "hassio_role": "default",
   "options": {
     "config_path": "/config/teletask/config.json"
   },
