@@ -59,7 +59,8 @@ async def handle_teletask_event(unit, type, nr, values):
 
     # Also update virtual RGBW lights that use this physical dimmer.
     if key in rgbw_channels:
-        for rgbw_key, channel in rgbw_channelsgroup = rgbw_groups[rgbw_key]
+        for rgbw_key, channel in rgbw_channels[key]
+            group = rgbw_groups[rgbw_key]
 
             # Teletask dimmer feedback is 0..100.
             group[channel] = values[0]
