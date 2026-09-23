@@ -184,7 +184,7 @@ def get_value(asset, value, as_dimmer=False):
             else:
                 result = 'ON'
 
-    elif component == 'switch' and asset['teletask_type'] in ['relay', 'genmood']:
+    elif component == 'switch' and asset['teletask_type'] in ['relay', 'genmood', 'locmood']:
         if value[0] == 0:
             result = 'OFF'
         else:
