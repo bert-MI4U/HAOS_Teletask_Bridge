@@ -6,15 +6,30 @@ import config as Config
 import roller_shutters as RS
 import platform
 import sys
+import json
 
 STOP = asyncio.Event()
 assets_dict = {}                            # provides a mapping between teletask-ids and loaded assets. allows us to see if we are really monitoring an event or not (teletask just sends everything)
-
+rgbw_groups = {}
+rgbw_channels = {}
 
 def ask_exit(*args):
     print("stop called, closing down")
     STOP.set()
 
+def clamp(value, minimum, maximum):
+    return max(minimum, min(maximum, value))
+ 
+ 
+def ha_to_teletask_channel(color_value, brightness):
+    """Convert HA 0..255 color + brightness to Teletask 0..100."""
+     
+    color_value = clamp(int(color_value), 0, 255)
+    brightness = clamp(int(brightness), 0, 255)
+     
+    level = (color_value / 255) * (brightness / 255) * 100
+     
+    return round(level)
 
 async def handle_teletask_event(unit, type, nr, values):
     """called when a teletask message arrived
@@ -34,6 +49,63 @@ async def handle_teletask_event(unit, type, nr, values):
             cover_value = await RS.handle_cover_event(key, asset, values)
         if cover_value:
             HA.send_cover_pos(asset, cover_value)
+    # Also update virtual RGBW lights that use this dimmer.
+    if key in rgbw_channels:
+    for rgbw_key, channel in rgbw_channelsgroup = rgbw_groups[rgbw_key]
+     
+    group[channel] = values[0]
+     
+    HA.send_rgbw_state(
+        group['asset'],
+        group['red'],
+        group['green'],
+        group['blue'],
+        group['white']
+    )
+    
+def load_rgbw_groups(items):
+    global rgbw_groups, rgbw_channels
+
+    rgbw_groups = {}
+    rgbw_channels = {}
+
+    for asset in items:
+        if asset.get('teletask_type') != 'rgbw':
+            continue
+
+        key = teletask.build_key_from_asset(asset)
+
+        group = {
+            "asset": asset,
+            "red": 0,
+            "green": 0,
+            "blue": 0,
+            "white": 0
+        }
+
+        rgbw_groups[key] = group
+
+        unit = asset['central_unit']
+
+        channel_map = {
+            "red": asset['red'],
+            "green": asset['green'],
+            "blue": asset['blue'],
+            "white": asset['white']
+        }
+
+        for channel, dimmer_id in channel_map.items():
+            dimmer_key = teletask.build_key(
+                unit,
+                'dimmer',
+                dimmer_id
+            )
+
+            rgbw_channels.setdefault(dimmer_key, []).append(
+                (key, channel)
+            )
+
+    print("loaded {} RGBW group(s)".format(len(rgbw_groups)))
 
 
 async def calibrate_covers():
@@ -44,7 +116,152 @@ async def calibrate_covers():
     for cover in covers:                        # need to let home-assistant know that all covers are closed now
         HA.send_cover_pos(cover, 0)
     
+async def handle_rgbw_command(asset, payload):
+    key = teletask.build_key_from_asset(asset)
+    group = rgbw_groups[key]
 
+    try:
+        command = json.loads(payload)
+    except Exception as e:
+        print("invalid RGBW command: {} ({})".format(payload, e))
+        return
+
+    state = command.get('state')
+
+    # Explicit OFF command.
+    if state == 'OFF':
+        target = {
+            "red": 0,
+            "green": 0,
+            "blue": 0,
+            "white": 0
+        }
+
+    else:
+        color = command.get('color')
+
+        if color:
+            brightness = command.get('brightness', 255)
+
+            target = {
+                "red": ha_to_teletask_channel(
+                    color.get('r', 0),
+                    brightness
+                ),
+                "green": ha_to_teletask_channel(
+                    color.get('g', 0),
+                    brightness
+                ),
+                "blue": ha_to_teletask_channel(
+                    color.get('b', 0),
+                    brightness
+                ),
+                "white": ha_to_teletask_channel(
+                    color.get('w', 0),
+                    brightness
+                )
+            }
+
+        elif 'brightness' in command:
+            # Change brightness but preserve the current RGBW proportions.
+            brightness = clamp(
+                int(command['brightness']),
+                0,
+                255
+            )
+
+            current_max = max(
+                group['red'],
+                group['green'],
+                group['blue'],
+                group['white']
+            )
+
+            if current_max > 0:
+                desired_max = brightness * 100 / 255
+                factor = desired_max / current_max
+
+                target = {
+                    "red": round(group['red'] * factor),
+                    "green": round(group['green'] * factor),
+                    "blue": round(group['blue'] * factor),
+                    "white": round(group['white'] * factor)
+                }
+            else:
+                # No previous color is known.
+                # Use white when only brightness is supplied.
+                target = {
+                    "red": 0,
+                    "green": 0,
+                    "blue": 0,
+                    "white": round(brightness * 100 / 255)
+                }
+
+        elif state == 'ON':
+            # ON without a color or brightness.
+            # Restore existing values when possible.
+            if max(
+                group['red'],
+                group['green'],
+                group['blue'],
+                group['white']
+            ) > 0:
+                target = {
+                    "red": group['red'],
+                    "green": group['green'],
+                    "blue": group['blue'],
+                    "white": group['white']
+                }
+            else:
+                target = {
+                    "red": 0,
+                    "green": 0,
+                    "blue": 0,
+                    "white": 100
+                }
+
+        else:
+            return
+
+    # Ensure values remain in Teletask's 0..100 range.
+    for channel in target:
+        target[channel] = clamp(
+            target[channel],
+            0,
+            100
+        )
+
+    channel_ids = {
+        "red": asset['red'],
+        "green": asset['green'],
+        "blue": asset['blue'],
+        "white": asset['white']
+    }
+
+    for channel in ['red', 'green', 'blue', 'white']:
+        dimmer_asset = {
+            "name": "{} {}".format(asset['name'], channel),
+            "component": "light",
+            "teletask_type": "dimmer",
+            "central_unit": asset['central_unit'],
+            "teletask_id": channel_ids[channel]
+        }
+
+        await teletask.set_actuator(
+            dimmer_asset,
+            str(target[channel])
+        )
+
+        group[channel] = target[channel]
+
+    HA.send_rgbw_state(
+        asset,
+        group['red'],
+        group['green'],
+        group['blue'],
+        group['white']
+    )
+    
 async def calibrate_cover(id):
     id = int(id)
     covers = [value for key, value in assets_dict.items() if value['component'] == 'cover' and value['teletask_id'] == id]
@@ -58,7 +275,9 @@ async def handle_actuator(unit, type, nr, value):
         if key in assets_dict:
             asset = assets_dict[key]
             value = value
-            if asset['component'] == 'cover' and value.isnumeric():
+            if asset['teletask_type'] == 'rgbw':
+                await handle_rgbw_command(asset, value)
+            elif asset['component'] == 'cover' and value.isnumeric():
                 await RS.move_to(key, asset, int(value))
                 HA.send_cover_pos(asset, value)
             else:
@@ -78,6 +297,9 @@ async def load_assets(items):
         items (array): list of assets to create a bridge for
     """
     print("start loading assets")
+    
+    load_rgbw_groups(items)
+    
     for asset in items:                                                     # build the dict so we can use it as a filter on the data coming from teletask
         key = teletask.build_key_from_asset(asset)
         assets_dict[key] = asset
