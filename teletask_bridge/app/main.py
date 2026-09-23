@@ -30,13 +30,13 @@ def ha_to_teletask_channel(color_value, brightness):
     return round(level)
 
 async def handle_teletask_event(unit, type, nr, values):
-    """called when a teletask message arrived
-        Teletask sends 
+    """Called when a Teletask message arrives.
+
     Args:
-        unit (nr): the nr of the unit
-        type (string) the teletask function / type
-        nr (number) the asset number
-        values (array) the values that were reported 
+        unit (nr): the number of the unit
+        type (string): the Teletask function/type
+        nr (number): the asset number
+        values (array): the values that were reported
     """
     key = teletask.build_key(unit, type, nr)
 
@@ -57,10 +57,11 @@ async def handle_teletask_event(unit, type, nr, values):
         if cover_value:
             HA.send_cover_pos(asset, cover_value)
 
-    # Also update virtual RGBW lights that use this dimmer.
+    # Also update virtual RGBW lights that use this physical dimmer.
     if key in rgbw_channels:
         for rgbw_key, channel in rgbw_channelsgroup = rgbw_groups[rgbw_key]
 
+            # Teletask dimmer feedback is 0..100.
             group[channel] = values[0]
 
             HA.send_rgbw_state(
@@ -69,7 +70,7 @@ async def handle_teletask_event(unit, type, nr, values):
                 group['green'],
                 group['blue'],
                 group['white']
-            ) 
+            )
 
 def load_rgbw_groups(items):
     global rgbw_groups, rgbw_channels
