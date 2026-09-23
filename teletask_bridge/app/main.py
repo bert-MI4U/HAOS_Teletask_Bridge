@@ -49,17 +49,17 @@ async def handle_teletask_event(unit, type, nr, values):
             HA.send_cover_pos(asset, cover_value)
     # Also update virtual RGBW lights that use this dimmer.
     if key in rgbw_channels:
-    for rgbw_key, channel in rgbw_channelsgroup = rgbw_groups[rgbw_key]
+        for rgbw_key, channel in rgbw_channelsgroup = rgbw_groups[rgbw_key]
      
-    group[channel] = values[0]
-     
-    HA.send_rgbw_state(
-        group['asset'],
-        group['red'],
-        group['green'],
-        group['blue'],
-        group['white']
-    )
+            group[channel] = values[0]
+             
+            HA.send_rgbw_state(
+                group['asset'],
+                group['red'],
+                group['green'],
+                group['blue'],
+                group['white']
+            )
     
 def load_rgbw_groups(items):
     global rgbw_groups, rgbw_channels
