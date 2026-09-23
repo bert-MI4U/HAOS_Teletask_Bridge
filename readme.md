@@ -37,19 +37,21 @@ All config data is stored in the file `config.json`, located in the application 
 - assets: all the sensors and actuators that you would like to have registered in home-assistant.
   - name: label used in home-assistant
   - component: the mqtt component used to register the asset in home assistant. See [mqtt configuration](https://www.home-assistant.io/integrations/mqtt/#configure-mqtt-options) for more info.
+      tested with
+      - light
+      - switch
+      - binary_sensor
+      - sensor (temperature, power, precipitation,wind_speed,illuminance)
   - teletask_type: the type of the component on the teletask side. Supported types are:
     - relay
     - dimmer
     - motor
     - locmood
-    - timedmood
     - genmood
     - flag
     - sensor
-    - process
-    - regime
-    - service
     - cond
+    - rgbw (a dummy creating a RGBW from 4 different dimmers to present as RGBW to HA)
   - teletask_id: the id number to identify the item in teletask. This can be found with the prosoft application of teletask.
 
 
@@ -68,32 +70,31 @@ All config data is stored in the file `config.json`, located in the application 
     },
     "assets": [
         {"name": "Garage", "component": "light", "teletask_type": "relay", "central_unit": 1, "teletask_id": 1},
- 
         {"name": "Oprit", "component": "light", "teletask_type": "locmood", "central_unit": 1, "teletask_id": 5},
 
         {"name": "Sauna R", "component": "light", "teletask_type": "dimmer", "central_unit": 1, "teletask_id": 1},
         {"name": "Sauna G", "component": "light", "teletask_type": "dimmer", "central_unit": 1, "teletask_id": 2},
         {"name": "Sauna B", "component": "light", "teletask_type": "dimmer", "central_unit": 1, "teletask_id": 3},
         {"name": "Sauna W", "component": "light", "teletask_type": "dimmer", "central_unit": 1, "teletask_id": 4},
+        {"name": "Sauna RGBW", "component": "light", "teletask_type": "rgbw", "central_unit": 1, "teletask_id": 1,"red":1,"green":2,"blue":3,"white":4},        
 
         {"name": "Werkbank 1", "component": "switch", "teletask_type": "relay", "central_unit": 1, "teletask_id": 7},
-        
+        {"name": "Ochtend", "component": "switch", "teletask_type": "locmood", "central_unit": 1, "teletask_id": 15},        
         {"name": "TV-kijken", "component": "switch", "teletask_type": "genmood", "central_unit": 1, "teletask_id": 6},
 
-        {"name": "Zomer", "component": "switch", "teletask_type": "flag", "central_unit": 1, "teletask_id": 5},
-
-        {"name": "Screens Weather", "component": "switch", "teletask_type": "process", "central_unit": 1, "teletask_id": 26},
-        
-        {"name": "Regen", "component": "switch", "teletask_type": "cond", "central_unit": 1, "teletask_id": 2},
-
-        {"name": "Living", "component": "sensor", "device_class": "temperature", "unit_of_measurement": "°C", "teletask_type": "sensor", "central_unit": 1, "teletask_id": 90},
+        {"name": "Zomer", "component": "binary_sensor", "teletask_type": "flag", "central_unit": 1, "teletask_id": 5},
+        {"name": "Nat", "component": "binary_sensor", "teletask_type": "cond", "central_unit": 1, "teletask_id": 2},
+      
+        {"name": "Badkamer", "component": "sensor", "device_class": "temperature", "unit_of_measurement": "°C", "teletask_type": "sensor", "central_unit": 1, "teletask_id": 114},
+        {"name": "W-Wellness", "component": "sensor", "device_class": "power", "state_class": "measurement", "unit_of_measurement": "W", "teletask_type": "sensor", "central_unit": 1, "teletask_id": 6},
+        {"name": "Regen", "component": "sensor", "device_class": "precipitation", "state_class": "measurement", "unit_of_measurement": "mm", "teletask_type": "sensor", "central_unit": 1, "teletask_id": 119},
+        {"name": "Wind", "component": "sensor", "device_class": "wind_speed", "state_class": "measurement", "unit_of_measurement": "kn", "teletask_type": "sensor", "central_unit": 1, "teletask_id": 84},
+        {"name": "Lux Hal", "component": "sensor", "device_class": "illuminance", "state_class": "measurement", "unit_of_measurement": "lx", "teletask_type": "sensor", "central_unit": 1, "teletask_id": 81}
     ]
 }
 ```
 
 [aarch64-shield]: https://img.shields.io/badge/aarch64-yes-green.svg
 [amd64-shield]: https://img.shields.io/badge/amd64-yes-green.svg
-[armhf-shield]: https://img.shields.io/badge/armhf-yes-green.svg
-[armv7-shield]: https://img.shields.io/badge/armv7-yes-green.svg
-[i386-shield]: https://img.shields.io/badge/i386-yes-green.svg
+
 
