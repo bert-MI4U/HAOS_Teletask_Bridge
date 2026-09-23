@@ -19,16 +19,14 @@ def ask_exit(*args):
 
 def clamp(value, minimum, maximum):
     return max(minimum, min(maximum, value))
- 
- 
+
 def ha_to_teletask_channel(color_value, brightness):
     """Convert HA 0..255 color + brightness to Teletask 0..100."""
-     
     color_value = clamp(int(color_value), 0, 255)
     brightness = clamp(int(brightness), 0, 255)
-     
+
     level = (color_value / 255) * (brightness / 255) * 100
-     
+
     return round(level)
 
 async def handle_teletask_event(unit, type, nr, values):
