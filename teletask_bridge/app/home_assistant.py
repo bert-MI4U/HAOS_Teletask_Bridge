@@ -92,6 +92,12 @@ def build_asset_def(base_topic, asset, key, is_first):
             "ids": ["teletask"]
         }
     }
+    # Virtual RGBW light composed of four Teletask dimmers, Use Home Assistant's MQTT JSON light schema.
+    if asset['teletask_type'] == 'rgbw':
+        payload['schema'] = 'json'
+        payload['cmd_t'] = '~/set'
+        payload['sup_clrm'] = ['rgbw']
+        
     if is_first:
         payload['dev']['mf'] = "teletask"
         payload['dev']['mdl'] = "micros+"
@@ -254,6 +260,64 @@ def send(asset, value):
         print("publishing to: {}, value: {}".format(topic, to_send))
         client.publish(topic, to_send, qos=0)
 
+def send_rgbw_state(asset, red, green, blue, white):
+    """Publish the combined state of four Teletask dimmers as one RGBW light.
+    Teletask channel values are 0..100. Home Assistant RGBW color values are 0..255.
+    """
+    if not client:
+        raise Exception("not connected")
+
+    key = teletask.build_key_from_asset(asset)
+    channels = [red, green, blue, white]
+    maximum = max(channels)
+
+    if maximum <= 0:
+        brightness = 0
+        rgbw = [0, 0, 0, 0]
+        state = 'OFF'
+    else:
+        # Overall brightness comes from the strongest channel.
+        brightness = round(maximum * 255 / 100)
+
+        # Normalize the color independently of brightness.
+        rgbw = [
+            round(red * 255 / maximum),
+            round(green * 255 / maximum),
+            round(blue * 255 / maximum),
+            round(white * 255 / maximum)
+        ]
+        state = 'ON'
+    payload = {
+        "state": state,
+        "brightness": brightness,
+        "color_mode": "rgbw",
+        "color": {
+            "r": rgbw[0],
+            "g": rgbw[1],
+            "b": rgbw[2],
+            "w": rgbw[3]
+        }
+    }
+    topic = '{}/{}/{}/{}/state'.format(
+        discovery_prefix,
+        asset['component'],
+        node_id,
+        key
+    )
+
+    print(
+        "publishing RGBW to: {}, value: {}".format(
+            topic,
+            payload
+        )
+    )
+
+    client.publish(
+        topic,
+        bytearray(json.dumps(payload), 'utf-8'),
+        qos=0
+    )
+    
 def send_cover_pos(asset, value):
     """special function to send the current position of the cover to this specific topic.
 
