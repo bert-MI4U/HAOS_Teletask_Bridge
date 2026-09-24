@@ -51,7 +51,6 @@ async def handle_teletask_event(unit, type, nr, values):
         # A temperature sensor can additionally expose a climate entity.
         if asset.get('climate', False) and type == 'sensor':
             climate_states[key] = values
-            HA.send_climate_state(asset, values)
             
         if asset['component'] == 'cover':
             cover_value = await RS.handle_cover_event(
