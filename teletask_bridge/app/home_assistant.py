@@ -296,9 +296,6 @@ def get_value(asset, value, as_dimmer=False):
 def sensor_value_to_temperature(raw):
     return round(raw / 10 - 273, 1)
 
-def sensor_value_to_temperature(raw):
-    return round(raw / 10 - 273, 1)
-
 
 def send_climate_state(asset, value):
     """Publish complete Teletask climate state to Home Assistant."""
