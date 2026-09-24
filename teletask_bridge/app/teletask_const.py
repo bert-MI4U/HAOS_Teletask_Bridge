@@ -80,7 +80,6 @@ SET_TEMPVENT = 105  #(Set mode to Vent, Airzone only)
 SET_TEMPSTOP = 106  #(Set mode to Stop, Airzone only)
 SET_TEMPHEATP = 107 #(Set mode to Heat+, Airzone only)
  
-SET_TEMPONOFF = 104 #(To toggle between ON and OFF)
 SET_REGAUTO =0      #(set Regime to AUTO)
 SET_REGWORKD = 1    #(set Regime to Workday)
 SET_REGWKEND = 2    #(set Regime to Weekend day)
