@@ -130,6 +130,17 @@ async def handle_climate_command(unit, nr, value):
 
         state = climate_states[sensor_key]
 
+        # Ignore HA temperature commands while the Teletask zone is off.
+        # Teletask reports an artificial target temperature while powered off.
+        if state.get('power', 0) == 0:
+            print(
+                "ignoring target temperature {} for {} while climate is off".format(
+                    payload,
+                    asset['name']
+                )
+            )
+            return
+
         current_target = round(
             state['target'] / 10 - 273,
             1
