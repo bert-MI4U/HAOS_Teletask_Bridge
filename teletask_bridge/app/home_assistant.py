@@ -296,14 +296,23 @@ def get_value(asset, value, as_dimmer=False):
 def sensor_value_to_temperature(raw):
     return round(raw / 10 - 273, 1)
 
+def sensor_value_to_temperature(raw):
+    return round(raw / 10 - 273, 1)
+
 
 def send_climate_state(asset, value):
-    """Publish a complete Teletask climate state to Home Assistant."""
+    """Publish complete Teletask climate state to Home Assistant."""
 
     if not client:
         raise Exception("not connected")
 
     if not isinstance(value, dict):
+        print(
+            "climate {}: expected dict, got {}".format(
+                asset['name'],
+                value
+            )
+        )
         return
 
     required = [
@@ -315,7 +324,20 @@ def send_climate_state(asset, value):
         'power'
     ]
 
-    if not all(field in value for field in required):
+    missing = [
+        field
+        for field in required
+        if field not in value
+    ]
+
+    if missing:
+        print(
+            "climate {}: missing fields {}, received {}".format(
+                asset['name'],
+                missing,
+                value
+            )
+        )
         return
 
     sensor_key = teletask.build_key_from_asset(asset)
@@ -327,10 +349,15 @@ def send_climate_state(asset, value):
         climate_key
     )
 
-    current_temp = sensor_value_to_temperature(value['value'])
-    target_temp = sensor_value_to_temperature(value['target'])
+    current_temp = sensor_value_to_temperature(
+        value['value']
+    )
 
-    # Active Teletask preset.
+    target_temp = sensor_value_to_temperature(
+        value['target']
+    )
+
+    # Teletask active preset
     preset_map = {
         26: 'day',
         25: 'night',
@@ -343,10 +370,12 @@ def send_climate_state(asset, value):
         'manual'
     )
 
-    # HVAC mode.
+    # Teletask HVAC mode
     mode_map = {
+        94: 'heat',
         95: 'heat',
-        94: 'heat'
+        96: 'cool',
+        106: 'off'
     }
 
     mode = mode_map.get(
@@ -354,7 +383,7 @@ def send_climate_state(asset, value):
         'heat'
     )
 
-    # Fan speed.
+    # Teletask fan speed
     fan_map = {
         89: 'auto',
         97: 'low',
@@ -367,8 +396,11 @@ def send_climate_state(asset, value):
         'auto'
     )
 
-    # Power reports whether heating is currently active.
-    action = 'heating' if value['power'] != 0 else 'idle'
+    # Power indicates whether heating is actually active.
+    if value['power'] != 0:
+        action = 'heating'
+    else:
+        action = 'idle'
 
     states = {
         'current_temperature': current_temp,
@@ -379,8 +411,19 @@ def send_climate_state(asset, value):
         'action': action
     }
 
+    print(
+        "climate {} decoded: {}".format(
+            asset['name'],
+            states
+        )
+    )
+
     for subtopic, state in states.items():
-        topic = '{}/{}'.format(base_topic, subtopic)
+
+        topic = '{}/{}'.format(
+            base_topic,
+            subtopic
+        )
 
         print(
             "publishing climate to: {}, value: {}".format(
@@ -394,6 +437,7 @@ def send_climate_state(asset, value):
             str(state),
             qos=0
         )
+        
 
 def load_climate_asset(asset):
     """Register an additional MQTT climate entity for a Teletask sensor."""
