@@ -324,7 +324,7 @@ def load_climate_asset(asset):
 
         "mode_stat_t": "~/mode",
         "mode_cmd_t": "~/mode/set",
-        "modes": ["heat", "cool"],
+        "modes": ["off", "heat", "cool"],
 
         "pr_mode_stat_t": "~/preset",
         "pr_mode_cmd_t": "~/preset/set",
@@ -536,20 +536,19 @@ def send_climate_state(asset, value):
         preset = 'none'
 
     # -------------------------------------------------------
-    # HVAC mode
+    # HVAC mode / power
     # -------------------------------------------------------
+    
+    # Teletask reports the temperature-zone power separately
+    # from the selected heating/cooling mode.
+    if value['power'] == 0:
+        mode = 'off'
+    else:
+        mode_map = {
+            94: 'heat',   # AUTO, heating-only installation
+            95: 'heat'
+        }
 
-    mode_map = {
-        94: 'heat',
-        95: 'heat',
-        96: 'cool',
-        106: 'off'
-    }
-
-    mode = mode_map.get(
-        value['mode'],
-        'heat'
-    )
 
     # -------------------------------------------------------
     # Fan mode
@@ -573,7 +572,9 @@ def send_climate_state(asset, value):
 
     # The Teletask Power field is not a reliable heating-demand
     # indication for this installation.
-    if current_temp < target_temp:
+    if value['power'] == 0:
+        action = 'off'
+    elif current_temp < target_temp:
         action = 'heating'
     else:
         action = 'idle'
