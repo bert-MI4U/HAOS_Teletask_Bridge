@@ -179,9 +179,6 @@ def convert_sensor(msg):
 
     return result
 
-def convert_sensor(msg):
-    return int.from_bytes(msg[6:8], "big")
-
 async def process_message(msg):
     """checks the incomming message and dispatches it as needed
     Args:
