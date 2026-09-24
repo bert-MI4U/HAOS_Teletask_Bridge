@@ -470,6 +470,15 @@ def send(asset, value):
         print("publishing to: {}, value: {}".format(topic, to_send))
         client.publish(topic, to_send, qos=0)
 
+    # A Teletask temperature sensor can additionally expose
+    # a Home Assistant climate entity.
+    if (
+        asset.get('climate', False)
+        and asset.get('teletask_type') == 'sensor'
+        and isinstance(value, dict)
+    ):
+        send_climate_state(asset, value)
+
 def send_rgbw_state(asset, red, green, blue, white):
     """Publish the combined state of four Teletask dimmers as one RGBW light.
     Teletask channel values are 0..100. Home Assistant RGBW color values are 0..255.
