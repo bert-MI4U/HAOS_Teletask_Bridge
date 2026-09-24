@@ -142,11 +142,44 @@ def verify_checksum(msg):
     if value != msg[-1]:
         raise Exception("checksum failed")
 
-
 def convert_sensor(msg):
     """Extract the raw Teletask sensor value.
     Interpretation of the value (temperature, power, etc.) is done in home_assistant.py based on the configured device_class.
+    Decode a Teletask sensor report.
+
+    Sensor report fields:
+      value       2 bytes
+      target      2 bytes
+      day         2 bytes
+      night       2 bytes
+      standby     1 byte
+      preset      1 byte
+      mode        1 byte
+      speed_mode  1 byte
+      power       1 byte
+      frost       1 byte
     """
+
+    result = {
+        "value": int.from_bytes(msg[6:8], "big")
+    }
+
+    # Some non-temperature sensor messages may contain fewer fields.
+    # Decode the extended sensor information only when available.
+    if len(msg) >= 20:
+        result["target"] = int.from_bytes(msg[8:10], "big")
+        result["day"] = int.from_bytes(msg[10:12], "big")
+        result["night"] = int.from_bytes(msg[12:14], "big")
+        result["standby"] = msg[14]
+        result["preset"] = msg[15]
+        result["mode"] = msg[16]
+        result["speed_mode"] = msg[17]
+        result["power"] = msg[18]
+        result["frost"] = msg[19]
+
+    return result
+
+def convert_sensor(msg):
     return int.from_bytes(msg[6:8], "big")
 
 async def process_message(msg):
