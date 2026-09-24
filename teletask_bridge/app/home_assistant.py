@@ -9,6 +9,7 @@ from gmqtt import constants as MQTTConst
 client = None
 discovery_prefix = 'homeassistant'
 node_id = "teletask_1"                                  # the id of the teletask device for mqtt topics
+climate_last_target = {}
 on_actuator = None                                      # callback that handles actuator messages for teletask
 main_loop = None                                        # async loop
 is_connected = False
@@ -509,10 +510,21 @@ def send_climate_state(asset, value):
         value['value']
     )
 
-    target_temp = sensor_value_to_temperature(
+    reported_target = sensor_value_to_temperature(
         value['target']
     )
-
+    
+    # Teletask reports an artificial target while the temperature
+    # zone is powered off. Keep the last meaningful ON target for HA.
+    if value['power'] != 0:
+        target_temp = reported_target
+        climate_last_target[sensor_key] = target_temp
+    else:
+        target_temp = climate_last_target.get(
+            sensor_key,
+            reported_target
+        )
+    
     # -------------------------------------------------------
     # Preset
     # -------------------------------------------------------
@@ -545,10 +557,13 @@ def send_climate_state(asset, value):
         mode = 'off'
     else:
         mode_map = {
-            94: 'heat',   # AUTO, heating-only installation
+            94: 'heat',
             95: 'heat'
         }
-
+        mode = mode_map.get(
+            value['mode'],
+            'heat'
+        )
 
     # -------------------------------------------------------
     # Fan mode
