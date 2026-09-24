@@ -2,6 +2,7 @@ import asyncio
 import signal
 import home_assistant as HA
 import teletask
+import teletask_const as const
 import config as Config
 import roller_shutters as RS
 import platform
