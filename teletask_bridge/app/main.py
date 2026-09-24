@@ -207,20 +207,55 @@ async def handle_climate_command(unit, nr, value):
     # -------------------------------------------------------
 
     elif command == 'mode/set':
-
-        mode_map = {
-            'heat': const.SET_TEMPHEAT
-        }
-
-        setting = mode_map.get(
-            payload.lower()
-        )
-
-        if setting is not None:
-            await teletask.set_sensor_command(
-                asset,
-                setting
+    
+        requested_mode = payload.lower()
+    
+        # We need the latest Teletask state so that TEMPONOFF,
+        # which is a toggle, is only sent when necessary.
+        state = climate_states.get(sensor_key)
+    
+        if state is None:
+            print(
+                "No current climate state available for {}".format(
+                    asset['name']
+                )
             )
+            return
+    
+        is_powered = state.get('power', 0) != 0
+    
+        # ---------------------------------------------------
+        # OFF
+        # ---------------------------------------------------
+    
+        if requested_mode == 'off':
+    
+            if is_powered:
+                await teletask.set_sensor_command(
+                    asset,
+                    const.SET_TEMPONOFF
+                )
+    
+        # ---------------------------------------------------
+        # HEAT / ON
+        # ---------------------------------------------------
+    
+        elif requested_mode == 'heat':
+    
+            # If the Teletask zone is currently powered off,
+            # toggle it back on first.
+            if not is_powered:
+                await teletask.set_sensor_command(
+                    asset,
+                    const.SET_TEMPONOFF
+                )
+    
+            # Explicitly select heating mode if needed.
+            if state.get('mode') != const.SET_TEMPHEAT:
+                await teletask.set_sensor_command(
+                    asset,
+                    const.SET_TEMPHEAT
+                )
 
 def load_rgbw_groups(items):
     global rgbw_groups, rgbw_channels
