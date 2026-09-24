@@ -12,6 +12,7 @@ STOP = asyncio.Event()
 assets_dict = {}                            # provides a mapping between teletask-ids and loaded assets. allows us to see if we are really monitoring an event or not (teletask just sends everything)
 rgbw_groups = {}
 rgbw_channels = {}
+climate_states = {}
 
 def ask_exit(*args):
     print("stop called, closing down")
@@ -47,6 +48,11 @@ async def handle_teletask_event(unit, type, nr, values):
 
         HA.send(asset, values)
 
+        # A temperature sensor can additionally expose a climate entity.
+        if asset.get('climate', False) and type == 'sensor':
+            climate_states[key] = values
+            HA.send_climate_state(asset, values)
+            
         if asset['component'] == 'cover':
             cover_value = await RS.handle_cover_event(
                 key,
@@ -71,6 +77,149 @@ async def handle_teletask_event(unit, type, nr, values):
                 group['green'],
                 group['blue'],
                 group['white']
+            )
+
+async def handle_climate_command(unit, nr, value):
+    """Translate Home Assistant MQTT Climate commands to Teletask."""
+
+    sensor_key = teletask.build_key(
+        unit,
+        'sensor',
+        nr
+    )
+
+    if sensor_key not in assets_dict:
+        print(
+            "Climate sensor not found: {}".format(
+                sensor_key
+            )
+        )
+        return
+
+    asset = assets_dict[sensor_key]
+
+    if not asset.get('climate', False):
+        return
+
+    if '|' not in value:
+        return
+
+    command, payload = value.split('|', 1)
+
+    print(
+        "climate command {} = {} for {}".format(
+            command,
+            payload,
+            asset['name']
+        )
+    )
+
+    # -------------------------------------------------------
+    # Target temperature
+    # -------------------------------------------------------
+
+    if command == 'target_temperature/set':
+
+        if sensor_key not in climate_states:
+            print(
+                "No current climate state available for {}".format(
+                    asset['name']
+                )
+            )
+            return
+
+        state = climate_states[sensor_key]
+
+        current_target = round(
+            state['target'] / 10 - 273,
+            1
+        )
+
+        requested_target = round(
+            float(payload) * 2
+        ) / 2
+
+        difference = requested_target - current_target
+
+        # Native Teletask adjustment is exactly 0.5 °C.
+        steps = round(abs(difference) / 0.5)
+
+        if difference > 0:
+            setting = const.SET_TEMPUP
+        elif difference < 0:
+            setting = const.SET_TEMPDOWN
+        else:
+            return
+
+        for _ in range(steps):
+            await teletask.set_sensor_command(
+                asset,
+                setting
+            )
+
+    # -------------------------------------------------------
+    # Preset
+    # -------------------------------------------------------
+
+    elif command == 'preset/set':
+
+        preset_map = {
+            'day': const.SET_TEMPDAY,
+            'night': const.SET_TEMPNIGHT,
+            'eco': const.SET_TEMPSTANDBY
+        }
+
+        setting = preset_map.get(
+            payload.lower()
+        )
+
+        if setting is not None:
+            await teletask.set_sensor_command(
+                asset,
+                setting
+            )
+
+    # -------------------------------------------------------
+    # Fan mode
+    # -------------------------------------------------------
+
+    elif command == 'fan_mode/set':
+
+        fan_map = {
+            'auto': const.SET_TEMPSPAUTO,
+            'low': const.SET_TEMPSPLOW,
+            'medium': const.SET_TEMPSPMED,
+            'high': const.SET_TEMPSPHIGH
+        }
+
+        setting = fan_map.get(
+            payload.lower()
+        )
+
+        if setting is not None:
+            await teletask.set_sensor_command(
+                asset,
+                setting
+            )
+
+    # -------------------------------------------------------
+    # HVAC mode
+    # -------------------------------------------------------
+
+    elif command == 'mode/set':
+
+        mode_map = {
+            'heat': const.SET_TEMPHEAT
+        }
+
+        setting = mode_map.get(
+            payload.lower()
+        )
+
+        if setting is not None:
+            await teletask.set_sensor_command(
+                asset,
+                setting
             )
 
 def load_rgbw_groups(items):
@@ -281,6 +430,9 @@ async def calibrate_cover(id):
 
 async def handle_actuator(unit, type, nr, value):
     try:
+        if type == 'climate':
+            await handle_climate_command(unit,nr,value)
+            return
         key = teletask.build_key(unit, type, nr)
         if key in assets_dict:
             asset = assets_dict[key]
