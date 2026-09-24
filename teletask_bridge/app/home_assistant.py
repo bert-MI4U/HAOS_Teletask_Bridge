@@ -513,11 +513,13 @@ def send(asset, value):
 
     # A Teletask temperature sensor can additionally expose
     # a Home Assistant climate entity.
-    if (
-        asset.get('climate', False)
-        and asset.get('teletask_type') == 'sensor'
-        and isinstance(value, dict)
-    ):
+    if asset.get('climate', False):
+        print(
+            "CLIMATE DEBUG {} received: {}".format(
+                asset['name'],
+                value
+            )
+        )
         send_climate_state(asset, value)
 
 def send_rgbw_state(asset, red, green, blue, white):
