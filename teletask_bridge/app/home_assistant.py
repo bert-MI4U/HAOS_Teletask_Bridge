@@ -24,15 +24,54 @@ def on_connect(client, flags, rc, properties):
 
 def on_message(client, topic, payload, qos, properties):
     print('RECV MSG:', payload)
+
     if not on_actuator:
         return
+
     payload = payload.decode()
     topic_parts = topic.split('/')
+
+    # Climate command:
+    #
+    # homeassistant/climate/teletask_1/
+    # 1_sensor_90_climate/target_temperature/set
+    #
+    if len(topic_parts) >= 6 and topic_parts[1] == 'climate':
+        climate_key = topic_parts[3]
+
+        if climate_key.endswith('_climate'):
+            climate_key = climate_key[:-8]
+
+        climate_parts = climate_key.split('_')
+
+        if len(climate_parts) >= 3:
+            command = '/'.join(topic_parts[4:])
+
+            main_loop.create_task(
+                on_actuator(
+                    climate_parts[0],
+                    'climate',
+                    climate_parts[2],
+                    '{}|{}'.format(command, payload)
+                )
+            )
+
+        return
+
+    # Existing normal Teletask command handling.
     teletask_parts = topic_parts[3].split('_')
+
     if len(teletask_parts) < 3:
         print("Invalid teletask part: " + topic_parts[3])
     else:
-        main_loop.create_task(on_actuator(teletask_parts[0], teletask_parts[1], teletask_parts[2], payload))
+        main_loop.create_task(
+            on_actuator(
+                teletask_parts[0],
+                teletask_parts[1],
+                teletask_parts[2],
+                payload
+            )
+        )
 
 
 def on_disconnect(client, packet, exc=None):
@@ -152,6 +191,8 @@ async def load_assets(items):
     is_first = True
     for asset in items:
         load_asset(asset, is_first)
+        if asset.get('climate', False):
+            load_climate_asset(asset)
         is_first = False
         is_cover = asset['component'] == 'cover'
         if is_cover:
@@ -167,7 +208,10 @@ async def load_assets(items):
     client.subscribe('{}/+/{}/+/setbri'.format(discovery_prefix, node_id))
     if has_covers:
         client.subscribe('{}/+/{}/+/setpos'.format(discovery_prefix, node_id))
-
+    client.subscribe('{}/climate/{}/+/target_temperature/set'.format(discovery_prefix,node_id))
+    client.subscribe('{}/climate/{}/+/preset/set'.format(discovery_prefix,node_id))
+    client.subscribe('{}/climate/{}/+/fan_mode/set'.format(discovery_prefix,node_id))
+    client.subscribe('{}/climate/{}/+/mode/set'.format(discovery_prefix,node_id))
 
 def get_value(asset, value, as_dimmer=False):
     """convert the value to something home assistant can work with
@@ -204,41 +248,207 @@ def get_value(asset, value, as_dimmer=False):
             result = 'closing'
         else:
             result = 'opening'
-            
+
     elif component == 'sensor':
         device_class = asset.get('device_class')
     
+        # Teletask sensor reports are now decoded as dictionaries.
+        if isinstance(value, dict):
+            raw_value = value['value']
+        else:
+            raw_value = value
+    
         if device_class == 'temperature':
             # Teletask temperature: Kelvin x 10
-            result = '{}'.format(round(value / 10 - 273, 2))
-    
+            result = '{}'.format(
+                round(raw_value / 10 - 273, 2)
+            )
         elif device_class == 'power':
             # Teletask power sensor: raw value x 10 = Watts
-            result = '{}'.format(value * 10)
-
+            result = '{}'.format(
+                raw_value * 10
+            )
         elif device_class == 'wind_speed':
             # Teletask wind speed is transmitted as knots x 10
-            result = '{}'.format(round(value / 10, 1))
-            
+            result = '{}'.format(
+                round(raw_value / 10, 1)
+            )
         elif device_class == 'precipitation':
             # Teletask precipitation: assumed raw value x 100
             # Verify scaling during actual rainfall
-            result = '{}'.format(round(value / 100, 2)) 
-            
+           result = '{}'.format(
+                round(raw_value / 100, 2)
+            )
         elif device_class == 'illuminance':
             # Teletask illuminance: lux x 10
-            result = '{}'.format(round(value / 10, 1))
-        
+            result = '{}'.format(
+                round(raw_value / 10, 1)
+            )   
         else:
-            # Unknown sensor type: publish raw Teletask value
-            result = '{}'.format(value)
+            result = '{}'.format(raw_value)
         
     if result == None:
         result = value                              # return the full array cause mqtt publish wants a byte array
-    
     else:
         result = bytearray(result, 'utf-8')
     return result
+
+def sensor_value_to_temperature(raw):
+    return round(raw / 10 - 273, 1)
+
+
+def send_climate_state(asset, value):
+    """Publish a complete Teletask climate state to Home Assistant."""
+
+    if not client:
+        raise Exception("not connected")
+
+    if not isinstance(value, dict):
+        return
+
+    required = [
+        'value',
+        'target',
+        'preset',
+        'mode',
+        'speed_mode',
+        'power'
+    ]
+
+    if not all(field in value for field in required):
+        return
+
+    sensor_key = teletask.build_key_from_asset(asset)
+    climate_key = '{}_climate'.format(sensor_key)
+
+    base_topic = '{}/climate/{}/{}'.format(
+        discovery_prefix,
+        node_id,
+        climate_key
+    )
+
+    current_temp = sensor_value_to_temperature(value['value'])
+    target_temp = sensor_value_to_temperature(value['target'])
+
+    # Active Teletask preset.
+    preset_map = {
+        26: 'day',
+        25: 'night',
+        93: 'eco',
+        0: 'manual'
+    }
+
+    preset = preset_map.get(
+        value['preset'],
+        'manual'
+    )
+
+    # HVAC mode.
+    mode_map = {
+        95: 'heat',
+        94: 'heat'
+    }
+
+    mode = mode_map.get(
+        value['mode'],
+        'heat'
+    )
+
+    # Fan speed.
+    fan_map = {
+        89: 'auto',
+        97: 'low',
+        98: 'medium',
+        99: 'high'
+    }
+
+    fan_mode = fan_map.get(
+        value['speed_mode'],
+        'auto'
+    )
+
+    # Power reports whether heating is currently active.
+    action = 'heating' if value['power'] != 0 else 'idle'
+
+    states = {
+        'current_temperature': current_temp,
+        'target_temperature': target_temp,
+        'mode': mode,
+        'preset': preset,
+        'fan_mode': fan_mode,
+        'action': action
+    }
+
+    for subtopic, state in states.items():
+        topic = '{}/{}'.format(base_topic, subtopic)
+
+        print(
+            "publishing climate to: {}, value: {}".format(
+                topic,
+                state
+            )
+        )
+
+        client.publish(
+            topic,
+            str(state),
+            qos=0
+        )
+
+def load_climate_asset(asset):
+    """Register an additional MQTT climate entity for a Teletask sensor."""
+
+    sensor_key = teletask.build_key_from_asset(asset)
+    climate_key = '{}_climate'.format(sensor_key)
+
+    base_topic = '{}/climate/{}/{}'.format(
+        discovery_prefix,
+        node_id,
+        climate_key
+    )
+
+    config_topic = '{}/config'.format(base_topic)
+
+    payload = {
+        "~": base_topic,
+        "name": asset['name'],
+        "unique_id": climate_key,
+
+        "curr_temp_t": "~/current_temperature",
+
+        "temp_stat_t": "~/target_temperature",
+        "temp_cmd_t": "~/target_temperature/set",
+
+        "mode_stat_t": "~/mode",
+        "mode_cmd_t": "~/mode/set",
+        "modes": ["heat", "cool"],
+
+        "pr_mode_stat_t": "~/preset",
+        "pr_mode_cmd_t": "~/preset/set",
+        "pr_modes": ["day", "night", "eco"],
+
+        "fan_mode_stat_t": "~/fan_mode",
+        "fan_mode_cmd_t": "~/fan_mode/set",
+        "fan_modes": ["auto", "low", "medium", "high"],
+
+        "act_t": "~/action",
+
+        "temp_unit": "C",
+        "temp_step": 0.5,
+
+        "min_temp": asset.get("min_temp", 10),
+        "max_temp": asset.get("max_temp", 30),
+
+        "dev": {
+            "ids": ["teletask"]
+        }
+    }
+
+    client.publish(
+        config_topic,
+        bytearray(json.dumps(payload), 'utf-8'),
+        qos=1
+    )
 
 def send(asset, value):
     if not client:
