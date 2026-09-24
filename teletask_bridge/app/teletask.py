@@ -325,6 +325,30 @@ async def set_actuator(asset, value):
         msg = [const.COMMAND_SET, asset['central_unit'], fnc, teletask_id_high, teletask_id_low, value]
         await send(msg)
     
+async def set_sensor_command(asset, setting):
+    """Send a Teletask command to a sensor/climate zone."""
+
+    print(
+        "teletask sensor command {} to {}".format(
+            setting,
+            asset['name']
+        )
+    )
+
+    teletask_id_low, teletask_id_high = split_2_bytes(
+        asset['teletask_id']
+    )
+
+    msg = [
+        const.COMMAND_SET,
+        asset['central_unit'],
+        const.FNC_SENSOR,
+        teletask_id_high,
+        teletask_id_low,
+        setting
+    ]
+
+    await send(msg)
 
 async def load_assets(items):
     if not writer:
