@@ -297,144 +297,6 @@ def sensor_value_to_temperature(raw):
     return round(raw / 10 - 273, 1)
 
 
-def send_climate_state(asset, value):
-    """Publish complete Teletask climate state to Home Assistant."""
-
-    if not client:
-        raise Exception("not connected")
-
-    if not isinstance(value, dict):
-        print(
-            "climate {}: expected dict, got {}".format(
-                asset['name'],
-                value
-            )
-        )
-        return
-
-    required = [
-        'value',
-        'target',
-        'preset',
-        'mode',
-        'speed_mode',
-        'power'
-    ]
-
-    missing = [
-        field
-        for field in required
-        if field not in value
-    ]
-
-    if missing:
-        print(
-            "climate {}: missing fields {}, received {}".format(
-                asset['name'],
-                missing,
-                value
-            )
-        )
-        return
-
-    sensor_key = teletask.build_key_from_asset(asset)
-    climate_key = '{}_climate'.format(sensor_key)
-
-    base_topic = '{}/climate/{}/{}'.format(
-        discovery_prefix,
-        node_id,
-        climate_key
-    )
-
-    current_temp = sensor_value_to_temperature(
-        value['value']
-    )
-
-    target_temp = sensor_value_to_temperature(
-        value['target']
-    )
-
-    # Teletask active preset
-    preset_map = {
-        26: 'day',
-        25: 'night',
-        93: 'eco',
-        0: 'manual'
-    }
-
-    preset = preset_map.get(
-        value['preset'],
-        'manual'
-    )
-
-    # Teletask HVAC mode
-    mode_map = {
-        94: 'heat',
-        95: 'heat',
-        96: 'cool',
-        106: 'off'
-    }
-
-    mode = mode_map.get(
-        value['mode'],
-        'heat'
-    )
-
-    # Teletask fan speed
-    fan_map = {
-        89: 'auto',
-        97: 'low',
-        98: 'medium',
-        99: 'high'
-    }
-
-    fan_mode = fan_map.get(
-        value['speed_mode'],
-        'auto'
-    )
-
-    # Power indicates whether heating is actually active.
-    if value['power'] != 0:
-        action = 'heating'
-    else:
-        action = 'idle'
-
-    states = {
-        'current_temperature': current_temp,
-        'target_temperature': target_temp,
-        'mode': mode,
-        'preset': preset,
-        'fan_mode': fan_mode,
-        'action': action
-    }
-
-    print(
-        "climate {} decoded: {}".format(
-            asset['name'],
-            states
-        )
-    )
-
-    for subtopic, state in states.items():
-
-        topic = '{}/{}'.format(
-            base_topic,
-            subtopic
-        )
-
-        print(
-            "publishing climate to: {}, value: {}".format(
-                topic,
-                state
-            )
-        )
-
-        client.publish(
-            topic,
-            str(state),
-            qos=0
-        )
-        
 
 def load_climate_asset(asset):
     """Register an additional MQTT climate entity for a Teletask sensor."""
@@ -593,3 +455,161 @@ def send_cover_pos(asset, value):
     topic = '{}/{}/{}/{}/pos'.format(discovery_prefix, asset['component'], node_id, key)
     print("publishing to: {}, value: {}".format(topic, value))
     client.publish(topic, value, qos=0)
+
+def send_climate_state(asset, value):
+    """Publish complete Teletask climate state to Home Assistant."""
+
+    if not client:
+        raise Exception("not connected")
+
+    if not isinstance(value, dict):
+        print(
+            "climate {}: expected dict, got {}".format(
+                asset['name'],
+                value
+            )
+        )
+        return
+
+    required = [
+        'value',
+        'target',
+        'preset',
+        'mode',
+        'speed_mode',
+        'power'
+    ]
+
+    missing = [
+        field
+        for field in required
+        if field not in value
+    ]
+
+    if missing:
+        print(
+            "climate {}: missing fields {}, received {}".format(
+                asset['name'],
+                missing,
+                value
+            )
+        )
+        return
+
+    sensor_key = teletask.build_key_from_asset(asset)
+    climate_key = '{}_climate'.format(sensor_key)
+
+    base_topic = '{}/climate/{}/{}'.format(
+        discovery_prefix,
+        node_id,
+        climate_key
+    )
+
+    current_temp = sensor_value_to_temperature(
+        value['value']
+    )
+
+    target_temp = sensor_value_to_temperature(
+        value['target']
+    )
+
+    # -------------------------------------------------------
+    # Preset
+    # -------------------------------------------------------
+
+    preset_code = value['preset']
+
+    target_raw = value['target']
+    day_raw = value.get('day')
+    night_raw = value.get('night')
+
+    if preset_code == 26 and target_raw == day_raw:
+        preset = 'day'
+
+    elif preset_code == 25 and target_raw == night_raw:
+        preset = 'night'
+
+    elif preset_code == 93:
+        preset = 'eco'
+
+    else:
+        preset = 'none'
+
+    # -------------------------------------------------------
+    # HVAC mode
+    # -------------------------------------------------------
+
+    mode_map = {
+        94: 'heat',
+        95: 'heat',
+        96: 'cool',
+        106: 'off'
+    }
+
+    mode = mode_map.get(
+        value['mode'],
+        'heat'
+    )
+
+    # -------------------------------------------------------
+    # Fan mode
+    # -------------------------------------------------------
+
+    fan_map = {
+        89: 'auto',
+        97: 'low',
+        98: 'medium',
+        99: 'high'
+    }
+
+    fan_mode = fan_map.get(
+        value['speed_mode'],
+        'auto'
+    )
+
+    # -------------------------------------------------------
+    # HVAC action
+    # -------------------------------------------------------
+
+    # The Teletask Power field is not a reliable heating-demand
+    # indication for this installation.
+    if current_temp < target_temp:
+        action = 'heating'
+    else:
+        action = 'idle'
+
+    states = {
+        'current_temperature': current_temp,
+        'target_temperature': target_temp,
+        'mode': mode,
+        'preset': preset,
+        'fan_mode': fan_mode,
+        'action': action
+    }
+
+    print(
+        "climate {} decoded: {}".format(
+            asset['name'],
+            states
+        )
+    )
+
+    for subtopic, state in states.items():
+
+        topic = '{}/{}'.format(
+            base_topic,
+            subtopic
+        )
+
+        print(
+            "publishing climate to: {}, value: {}".format(
+                topic,
+                state
+            )
+        )
+
+        client.publish(
+            topic,
+            str(state),
+            qos=0
+        )
